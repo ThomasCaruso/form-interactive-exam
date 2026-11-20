@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="FORM — a personal stylist that learns your fit, taste, and budget, then builds complete looks for real occasions. Interactive demo.">
+  <title>FORM — A stylist that knows you</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <noscript><p style="padding:24px">FORM is an interactive demo and needs JavaScript enabled.</p></noscript>
+
+  <!-- ============================================================
+       COVER — quiet editorial entry
+  ============================================================ -->
+  <section id="coverView" class="cover is-active" aria-label="FORM introduction">
+    <header class="cover-top">
+      <span class="wordmark">FORM</span>
+      <span class="demo-pill">Demo preview</span>
+    </header>
+    <div class="cover-body">
+      <p class="eyebrow">Personal styling, quietly done</p>
+      <h1 class="cover-title">A stylist that<br><em>actually knows you.</em></h1>
+      <p class="cover-copy">
+        FORM learns your proportions, your taste, and your budget — then builds
+        complete looks for real occasions, from pieces you can actually buy.
+      </p>
+      <div class="cover-actions">
+        <button class="btn btn-dark" data-action="onboard">Build my FORM</button>
+        <button class="btn btn-ghost" data-action="demo">Explore the demo</button>
+      </div>
+      <ul class="cover-points">
+        <li><b>Learns your fit</b><span>Height, sizes, and photos — not guesswork</span></li>
+        <li><b>Occasion first</b><span>Tell it the moment, get three directions</span></li>
+        <li><b>Real pieces</b><span>Complete looks with honest totals</span></li>
+      </ul>
+    </div>
+    <footer class="cover-foot">Demo experience — no accounts, nothing is purchased.</footer>
+  </section>
+
+  <!-- ============================================================
+       APP SHELL
+  ============================================================ -->
+  <div id="appView" class="app" aria-hidden="true">
+
+    <aside class="sidebar">
+      <button class="wordmark as-button" data-route="cover" aria-label="Back to cover">FORM</button>
+      <nav class="side-nav" aria-label="Main">
+        <button class="side-link nav-link active" data-tab="home">Home</button>
+        <button class="side-link nav-link" data-tab="saved">Saved</button>
+        <button class="side-link nav-link" data-tab="profile">Your FORM</button>
+      </nav>
+      <div class="side-foot">
+        <span class="demo-pill">Demo preview</span>
+        <button id="profileShortcut" class="user-chip">
+          <span class="user-initial" id="userInitial">T</span>
+          <span id="sidebarName">Thomas</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="app-main">
+      <header class="mobile-top">
+        <button class="wordmark as-button" data-route="cover" aria-label="Back to cover">FORM</button>
+        <span class="demo-pill">Demo</span>
+      </header>
+
+      <!-- HOME -->
+      <section class="tab-panel active" data-panel="home" aria-label="Home">
+        <div class="hero">
+          <p class="eyebrow" id="greetingLine">Good evening, Thomas</p>
+          <h2 class="hero-title">What are you dressing&nbsp;for?</h2>
+          <div class="prompt-box">
+            <textarea id="occasionInput" rows="3"
+              placeholder="Dinner in SoHo Saturday. 55°F. I want to look expensive but not overdressed. Under $350."
+              aria-label="Describe the occasion"></textarea>
+            <div class="prompt-foot">
+              <span class="prompt-hint">Describe the moment — FORM handles the rest.</span>
+              <button id="buildLooks" class="btn btn-dark">Style me</button>
+            </div>
+          </div>
+          <div class="chip-row" id="chipRow" aria-label="Common occasions">
+            <button data-prompt="Date night. Elevated but relaxed — a good restaurant, no jacket required. Under $250.">Date night</button>
+            <button data-prompt="A normal workday. Smart, quiet, comfortable. Nothing flashy.">Work</button>
+            <button data-prompt="Going out with friends. Darker palette, easy shoes, has to stay sharp late.">Going out</button>
+            <button data-prompt="Fall wedding guest. Semi-formal, warm tones. Under $500.">Wedding</button>
+            <button data-prompt="Dinner in SoHo Saturday. 55°F. I want to look expensive but not overdressed. Under $350.">Dinner</button>
+            <button data-prompt="A long weekend somewhere warm. Light layers, easy fit, everything works together.">Vacation</button>
+            <button data-prompt="Everyday rotation. Clean basics that work on repeat.">Everyday</button>
+            <button data-prompt="Job interview. Polished and modern, not corporate-stiff. Under $400.">Interview</button>
+          </div>
+        </div>
+
+        <section class="home-section">
+          <div class="section-head">
+            <h3>Recently styled</h3>
+          </div>
+          <div id="recentGrid" class="mini-grid"></div>
+          <p id="recentEmpty" class="quiet-note show">Nothing yet. The looks FORM builds for you will live here.</p>
+        </section>
+
+        <section class="home-section">
+          <div class="section-head">
+            <h3>Saved looks</h3>
+            <button class="text-link nav-link" data-tab="saved">View all</button>
+          </div>
+          <div id="savedStrip" class="mini-grid"></div>
+          <p id="savedStripEmpty" class="quiet-note show">Save a look and it will appear here.</p>
+        </section>
+      </section>
+
+      <!-- RESULTS -->
+      <section class="tab-panel" data-panel="results" aria-label="Styled results">
+        <div class="results-head">
+          <button class="text-link nav-link" data-tab="home">&larr; New request</button>
+          <p class="eyebrow">Styled for</p>
+          <h2 class="hero-title small" id="resultsTitle">Your occasion</h2>
+          <p class="results-sub">Three directions, filtered for your fit, taste, and budget.</p>
+        </div>
+        <section class="revise" aria-labelledby="reviseTitle">
+          <div class="revise-head">
+            <h4 id="reviseTitle">Not quite there? Revise it.</h4>
+            <p>Each change becomes a new version. Compare them, go back, keep experimenting.</p>
+          </div>
+          <div class="chip-row revise-moves" aria-label="Revision directions">
+            <button data-revise="cheaper">Lower total</button>
+            <button data-revise="dressier">Dressier</button>
+            <button data-revise="relaxed">More relaxed</button>
+            <button data-revise="darker">Darker palette</button>
+          </div>
+          <div class="version-row">
+            <span class="field-label">Versions</span>
+            <div id="versionSeg" class="seg version-seg" aria-label="Look versions"></div>
+          </div>
+          <p id="reviseSummary" class="revise-summary" aria-live="polite"></p>
+        </section>
+        <div id="looksGrid" class="looks-grid"></div>
+      </section>
+
+      <!-- SAVED -->
+      <section class="tab-panel" data-panel="saved" aria-label="Saved looks">
+        <div class="results-head">
+          <p class="eyebrow">Your wardrobe board</p>
+          <h2 class="hero-title small">Saved looks</h2>
+          <p class="results-sub">Everything you've kept, in one place.</p>
+        </div>
+        <div id="savedGrid" class="looks-grid"></div>
+        <div id="savedEmpty" class="empty-state show">
+          <h4>Nothing saved yet</h4>
+          <p>When a look lands, keep it here. Your board becomes the record of what works on you.</p>
+          <button class="btn btn-ghost nav-link" data-tab="home">Style something</button>
+        </div>
+      </section>
+
+      <!-- YOUR FORM -->
+      <section class="tab-panel" data-panel="profile" aria-label="Your FORM">
+        <div class="results-head">
+          <p class="eyebrow">Your FORM</p>
+          <h2 class="hero-title small">What FORM knows about you</h2>
+          <p class="results-sub">The model behind every recommendation. Everything here stays on this device.</p>
+        </div>
+        <div class="profile-grid">
+          <article class="profile-card">
+            <h4>Style DNA</h4>
+            <div id="profileStyles" class="chip-stack"></div>
+            <p id="styleLine" class="profile-line">Lean, neutral, quietly structured.</p>
+          </article>
+          <article class="profile-card">
+            <h4>Shopping</h4>
+            <dl class="fact-list">
+              <div><dt>Comfort zone</dt><dd id="prefBudget">$300</dd></div>
+              <div><dt>Priority</dt><dd id="prefPriority">Best overall look</dd></div>
+            </dl>
+            <div id="brandList" class="chip-stack small"></div>
+          </article>
+          <article class="profile-card">
+            <h4>Sizing</h4>
+            <dl id="fitList" class="fact-list"></dl>
+          </article>
+          <article class="profile-card">
+            <h4>Reference photos</h4>
+            <div id="photoWall" class="photo-wall"></div>
+            <p class="profile-note">Photos stay on your device in this demo — they shape fit, never leave it.</p>
+          </article>
+          <article class="profile-card wide">
+            <h4>What FORM has learned <span class="demo-pill tiny">Demo signals</span></h4>
+            <dl id="learnedList" class="fact-list"></dl>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Main">
+      <button class="bottom-link nav-link active" data-tab="home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
+        <span>Home</span>
+      </button>
+      <button class="bottom-link nav-link" data-tab="saved">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z"/></svg>
+        <span>Saved</span>
+      </button>
+      <button class="bottom-link nav-link" data-tab="profile">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+        <span>Your FORM</span>
+      </button>
+    </nav>
+
+    <!-- LOADING -->
+    <div id="loadingOverlay" class="loading" aria-hidden="true" role="status">
+      <p class="eyebrow">Building your looks</p>
+      <h3 class="loading-title" id="loadingLine">Considering your style</h3>
+      <div class="loading-bar"><span id="loadingBarFill"></span></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       ONBOARDING
+  ============================================================ -->
+  <div id="onboarding" class="onboarding" aria-hidden="true" role="dialog" aria-label="Set up your FORM">
+    <div class="onboard-frame">
+      <header class="onboard-head">
+        <span class="wordmark">FORM</span>
+        <span class="onboard-count" id="progressLabel">01 / 04</span>
+        <button class="icon-btn" data-close-onboarding aria-label="Close setup">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <div class="onboard-progress"><span id="progressBar"></span></div>
+
+      <div class="onboard-steps">
+        <section class="onboarding-step active" data-step="1">
+          <h2>Let&rsquo;s build your FORM.</h2>
+          <p class="step-sub">Three quick photos teach FORM your proportions. In this demo they never leave your device.</p>
+          <div class="upload-row">
+            <label class="upload-slot">
+              <input type="file" accept="image/*" id="photoFront">
+              <img alt="" class="slot-img">
+              <span class="slot-plus" aria-hidden="true">+</span>
+              <span class="slot-label">Front</span>
+            </label>
+            <label class="upload-slot">
+              <input type="file" accept="image/*" id="photoSide">
+              <img alt="" class="slot-img">
+              <span class="slot-plus" aria-hidden="true">+</span>
+              <span class="slot-label">Side</span>
+            </label>
+            <label class="upload-slot">
+              <input type="file" accept="image/*" id="photoNatural">
+              <img alt="" class="slot-img">
+              <span class="slot-plus" aria-hidden="true">+</span>
+              <span class="slot-label">Natural light</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="onboarding-step" data-step="2">
+          <h2>What&rsquo;s your style?</h2>
+          <p class="step-sub">Pick two or three. FORM uses these to set direction — not rules.</p>
+          <div id="stylePicker" class="style-picker">
+            <button data-style="Minimal"><b>Minimal</b><span>Clean lines, quiet color</span></button>
+            <button data-style="Elevated casual"><b>Elevated casual</b><span>Polished, never stiff</span></button>
+            <button data-style="Classic"><b>Classic</b><span>Timeless over trendy</span></button>
+            <button data-style="Streetwear"><b>Streetwear</b><span>Relaxed, current</span></button>
+            <button data-style="Formal"><b>Formal</b><span>Sharp tailoring</span></button>
+            <button data-style="Rugged"><b>Rugged</b><span>Workwear bones</span></button>
+            <button data-style="Playful"><b>Playful</b><span>Color, pattern, fun</span></button>
+            <button data-style="Bold"><b>Bold</b><span>Makes an entrance</span></button>
+          </div>
+        </section>
+
+        <section class="onboarding-step" data-step="3">
+          <h2>How do you usually fit?</h2>
+          <p class="step-sub">Sizes stay on your device. FORM uses them to judge proportion and length.</p>
+          <div class="form-grid">
+            <label class="field span-2"><span>Name</span><input id="nameInput" type="text" value="Thomas" autocomplete="name"></label>
+            <label class="field"><span>Height</span><input id="heightInput" type="text" value='6&#39;0"' inputmode="text"></label>
+            <label class="field"><span>Top size</span>
+              <select id="topSize">
+                <option>XS</option><option>S</option><option selected>M</option>
+                <option>L</option><option>XL</option><option>XXL</option>
+              </select>
+            </label>
+            <label class="field"><span>Waist</span>
+              <select id="waistSize">
+                <option>28</option><option>29</option><option selected>30</option>
+                <option>31</option><option>32</option><option>34</option><option>36</option>
+              </select>
+            </label>
+            <label class="field"><span>Inseam</span>
+              <select id="inseamSize">
+                <option>30</option><option selected>32</option><option>34</option>
+              </select>
+            </label>
+            <label class="field"><span>Shoe</span>
+              <select id="shoeSize">
+                <option>8</option><option>9</option><option selected>10</option>
+                <option>11</option><option>12</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="onboarding-step" data-step="4">
+          <h2>How do you usually shop?</h2>
+          <p class="step-sub">FORM balances price against the occasion. You approve every piece.</p>
+          <div class="budget-row">
+            <span class="field-label">Comfort zone per look</span>
+            <output id="budgetValue">$300</output>
+            <input id="budgetRange" type="range" min="100" max="600" step="25" value="300" aria-label="Budget per look">
+          </div>
+          <div id="priorityPicker" class="stack-picker">
+            <button data-priority="Value first"><b>Value first</b><span>Lowest price that still looks right</span></button>
+            <button data-priority="Balanced"><b>Balanced</b><span>A mix of price and quality</span></button>
+            <button data-priority="Best overall look" class="selected"><b>Best overall look</b><span>Spend where it shows</span></button>
+          </div>
+          <label class="field"><span>Brands you love <em>(optional)</em></span>
+            <input id="brandInput" type="text" placeholder="COS, Uniqlo, New Balance…">
+          </label>
+        </section>
+      </div>
+
+      <footer class="onboard-foot">
+        <button id="onboardBack" class="btn btn-ghost">Back</button>
+        <button id="onboardNext" class="btn btn-dark">Continue &rarr;</button>
+      </footer>
+    </div>
+    <div id="onboardDone" class="onboard-done" aria-hidden="true">
+      <p class="eyebrow">All set</p>
+      <h2>Your FORM is ready.</h2>
+      <p class="step-sub">Three looks, built around you.</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       LOOK DETAIL
+  ============================================================ -->
+  <div id="lookModal" class="modal" aria-hidden="true" role="dialog" aria-label="Look detail">
+    <div class="modal-scrim" data-close-look></div>
+    <div class="modal-card">
+      <button class="icon-btn modal-close" id="closeLook" aria-label="Close look">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+
+      <div class="modal-visual">
+        <div id="lookScene" class="look-scene">
+          <div id="modalAvatar" class="avatar"></div>
+          <div id="tryonShimmer" class="tryon-shimmer"><span>Preparing your preview&hellip;</span></div>
+          <span class="tryon-tag" hidden>Try-on preview &middot; simulated</span>
+        </div>
+        <div class="visual-toolbar">
+          <div id="viewToggle" class="seg" hidden>
+            <button data-view="original" class="active">Original</button>
+            <button data-view="tryon">Try-on</button>
+          </div>
+          <span class="visual-caption" id="visualCaption"></span>
+        </div>
+      </div>
+
+      <div class="modal-info">
+        <p class="eyebrow" id="modalEyebrow">Look 01</p>
+        <h3 class="modal-title" id="modalTitle">Quiet confidence</h3>
+        <p class="modal-desc" id="modalDescription"></p>
+        <div class="why-block">
+          <h4>Why FORM chose this</h4>
+          <p id="modalWhy"></p>
+        </div>
+        <div id="productList" class="product-list"></div>
+        <div class="total-row"><span>Total</span><b id="modalTotal">$286</b></div>
+        <div class="modal-actions">
+          <button id="modalSave" class="btn btn-dark">Save look</button>
+          <button id="tryOnButton" class="btn btn-ghost">See it on me</button>
+          <button id="dismissLook" class="text-link">Not quite right</button>
+        </div>
+        <div class="tryon-actions" id="tryonActions" hidden>
+          <button class="text-link" id="tryAnother">Try another look</button>
+          <button class="text-link" id="changeItem">Change an item</button>
+        </div>
+        <p class="demo-note">Demo catalog — pieces are illustrative, nothing is for sale here.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SWAP DRAWER
+  ============================================================ -->
+  <div id="swapDrawer" class="drawer" aria-hidden="true" role="dialog" aria-label="Swap an item">
+    <div class="drawer-scrim" data-close-swap></div>
+    <div class="drawer-sheet">
+      <header class="drawer-head">
+        <div>
+          <h4 id="swapTitle">Swap your knit</h4>
+          <p class="drawer-sub">Priced and styled for this look.</p>
+        </div>
+        <button class="icon-btn" data-close-swap aria-label="Close swap">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </header>
+      <div id="swapList" class="swap-list"></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
