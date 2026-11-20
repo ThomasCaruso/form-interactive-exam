@@ -33,9 +33,43 @@ full-screen app layout on phones.
 
 ## About this build
 
-- The app is written in React Native with Expo and exported to static web files. This repo contains
-  only that compiled website (`app/`) and a root page that opens it.
+- FORM uses Expo and React Native Web. The editable app is in `source/`, and the GitHub Pages export is in `app/`.
 - Everything runs in the browser. There are no accounts and no server, and nothing is purchased.
   Product prices are a guide from the retailer.
 - AI try-on needs a private image service, so it is not connected in this public build. The app says so.
 - Each screen has its own entry page, and `404.html` falls back to the app, so reloading any screen works.
+
+## Rebuild from source
+
+Use Node.js 22 LTS and npm. Run these commands from the repository root.
+
+```sh
+cd source
+npm ci
+npm run build:pages
+```
+
+The build refreshes the root `app/` export, each route entry page, and `404.html`.
+It disables sign-in and clears inherited `EXPO_PUBLIC_*` settings before Expo runs.
+The public demo needs no environment files or service credentials.
+
+## Browser tests
+
+From `source/`, install Playwright's Chromium and run the desktop and emulated iPhone tests.
+
+```sh
+npx playwright install chromium
+npm run test:pages
+```
+
+To test an export locally, serve the parent of a checkout named `form-interactive-exam`
+on loopback so the repository's GitHub Pages path matches locally. For example, with
+Python installed, run `python -m http.server 8000 --bind 127.0.0.1` from that parent.
+Then run `npm run test:pages -- http://127.0.0.1:8000/form-interactive-exam/` from `source/`.
+
+## Codex improvement
+
+Codex reproduced a keyboard conflict on the published For You page and updated the
+deck so a focused control keeps its keyboard input. With focus off the controls,
+the original shortcuts still save, pass, open details, and undo. The browser tests
+cover both cases, along with onboarding, navigation, and saved items.

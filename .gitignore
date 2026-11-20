@@ -1,0 +1,13 @@
+node_modules/
+.expo/
+expo-env.d.ts
+.pages-build-*/
+.env*
+server/
+*.pem
+*.key
+*.p8
+*.p12
+*.jks
+*.mobileprovision
+.form-*/

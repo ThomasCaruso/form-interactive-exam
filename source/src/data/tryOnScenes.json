@@ -1,0 +1,38 @@
+[
+  {
+    "id": "original",
+    "label": "Original photo",
+    "description": "Keep your current setting.",
+    "prompt": "Preserve the reference camera and background."
+  },
+  {
+    "id": "studio",
+    "label": "Studio",
+    "description": "Warm stone. Soft editorial light.",
+    "prompt": "A refined photography studio with warm limestone walls, a seamless pale floor and soft editorial daylight."
+  },
+  {
+    "id": "city",
+    "label": "City",
+    "description": "Quiet architecture. Natural daylight.",
+    "prompt": "An elegant city street with understated stone architecture and natural daylight; no crowds or distracting signs."
+  },
+  {
+    "id": "coast",
+    "label": "Coast",
+    "description": "Open horizon. Golden light.",
+    "prompt": "A quiet coastal terrace with the sea on the horizon and soft late-afternoon light."
+  },
+  {
+    "id": "evening",
+    "label": "Evening",
+    "description": "Low light. A considered entrance.",
+    "prompt": "An elegant hotel entrance at dusk with warm architectural lighting and a sophisticated evening atmosphere."
+  },
+  {
+    "id": "custom",
+    "label": "Custom scene",
+    "description": "Describe somewhere that feels like you.",
+    "prompt": ""
+  }
+]

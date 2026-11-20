@@ -1,0 +1,94 @@
+{
+  "expo": {
+    "name": "FORM",
+    "slug": "form-mobile",
+    "scheme": "form",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#f4f1ea",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.novasolutions.form"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f4f1ea",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.novasolutions.form",
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.WRITE_CALENDAR"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#f4f1ea"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FORM lets you choose personal fitting photos and clothing images. Added photos stay on this device.",
+          "cameraPermission": "FORM uses your camera for personal fitting photos and clothing images.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-web-browser",
+      "expo-secure-store",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "FORM uses your camera for guided personal fitting photos. Photos stay on this device until you choose a connected try-on service.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
+        }
+      ],
+      "expo-asset",
+      "expo-sharing",
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "FORM reads your calendar on this phone to plan outfits around your day. Event details never leave your phone."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "FORM uses your approximate area, rounded to about 10 km, to get the weather for your outfit plans."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#161512",
+          "defaultChannel": "morning"
+        }
+      ],
+      "expo-localization",
+      "expo-background-task"
+    ],
+    "experiments": {
+      "baseUrl": "/form-interactive-exam/app"
+    }
+  }
+}
