@@ -11,7 +11,8 @@ FORM started as a phone app. This build lays it out as a real website on a compu
 full-screen app layout on phones.
 
 - **Landing page:** the promise, a looping cover that shows chosen pieces becoming a worn look,
-  "How it works", and a moving strip of real pieces from the catalogue.
+  "How it works", a lookbook of the app's styled looks, and a moving strip of real catalogue
+  pieces photographed on models, with prices.
 - **Site navigation:** a top bar with For You, Edits, Try On, Saved (with a live count), You, and
   **Start over**, which clears what the site saved in your browser.
 - **For You:** a two-column page. The left side has the date, your progress through today's selection,
@@ -19,6 +20,7 @@ full-screen app layout on phones.
 - **Keyboard controls** on the deck: `→` save, `←` pass, `Enter` details, `Z` undo.
 - **Saved:** a four-column grid of pieces, and looks two across.
 - **Onboarding, looks and pieces:** split pages with an editorial photograph beside each step.
+  A piece's page shows the retailer's on-model photo of that piece when there is one.
 
 ## Try it
 

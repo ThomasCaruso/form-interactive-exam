@@ -2,11 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { CoverLoop, CoverProgress, useCoverLoop } from '../components/CoverLoop';
-import { PlateImage } from '../components/PlateImage';
-import { ProductVisual } from '../components/ProductVisual';
-import { coverScenes } from '../data/editorial';
+import { coverScenes, onModelPhotography } from '../data/editorial';
 import { realCatalogProducts } from '../data/realCatalog';
-import { retailerPhotography } from '../data/retailerPhotography';
 import { formatMoney } from '../domain/selectors';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { colors } from '../theme/tokens';
@@ -25,11 +22,23 @@ function CTA({ label, onPress, dark = false }: { label: string; onPress: () => v
   </Pressable>;
 }
 
-/** A slow, endless strip of real pieces from the catalogue. */
+/** Catalogue pieces that MUJI photographed on a model, alternating womenswear and menswear. */
+function onModelPieces(count: number) {
+  const shot = realCatalogProducts.filter(p => onModelPhotography[p.id]);
+  const women = shot.filter(p => p.department === 'womens'), men = shot.filter(p => p.department !== 'womens');
+  const picked: typeof shot = [];
+  for (let i = 0; picked.length < count && (i < women.length || i < men.length); i++) {
+    if (women[i * 3]) picked.push(women[i * 3]);
+    if (men[i * 3]) picked.push(men[i * 3]);
+  }
+  return picked.slice(0, count);
+}
+
+/** A slow, endless strip of real pieces from the catalogue, shown as worn. */
 function Marquee() {
   const reduced = useReduceMotion();
-  const pieces = useMemo(() => realCatalogProducts.filter(p => retailerPhotography[p.id]).filter((_, i) => i % 3 === 0).slice(0, 14), []);
-  const TILE = 200, GAP = 20, span = pieces.length * (TILE + GAP);
+  const pieces = useMemo(() => onModelPieces(16), []);
+  const TILE = 220, GAP = 20, span = pieces.length * (TILE + GAP);
   const x = useSharedValue(0);
   useEffect(() => {
     if (reduced || !span) return;
@@ -37,16 +46,28 @@ function Marquee() {
     return () => cancelAnimation(x);
   }, [reduced, span, x]);
   const style = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
-  return <View style={styles.marquee} accessibilityLabel="Pieces from the catalogue">
+  return <View style={styles.marquee} accessibilityLabel="Pieces from the catalogue, shown worn">
     <Animated.View style={[styles.strip, style]}>
       {[...pieces, ...pieces].map((p, i) => <View key={p.id + i} style={{ width: TILE }}>
-        <View style={styles.stripPhoto}><ProductVisual product={p} transition={false} /></View>
+        <View style={styles.stripPhoto}><Image source={onModelPhotography[p.id]} resizeMode="cover" style={fill} /></View>
         <Text numberOfLines={1} style={styles.stripBrand}>{(p.brand ?? '').toUpperCase()}</Text>
         <Text numberOfLines={1} style={styles.stripName}>{p.name} · {formatMoney(p.priceCents)}</Text>
       </View>)}
     </Animated.View>
   </View>;
 }
+
+const quietConfidence = require('../../assets/placeholders/quiet-confidence.jpg');
+const nightOut = require('../../assets/placeholders/night-out.jpg');
+const weekendEase = require('../../assets/placeholders/weekend-ease.jpg');
+const womensWeekend = require('../../assets/placeholders/womens-weekend.jpg');
+/** The app's own look photography, named the way the app names the looks. */
+const lookbook = [
+  { image: nightOut, title: 'Night out', note: 'Dark layers, one sharp jacket' },
+  { image: womensWeekend, title: 'Camel & white', note: 'Tailored, easy, all day' },
+  { image: weekendEase, title: 'Weekend ease', note: 'Soft knit, relaxed trousers' },
+  { image: quietConfidence, title: 'Quiet confidence', note: 'Suede, cream and charcoal' },
+];
 
 const steps = [
   { n: '01', title: 'Teach it your taste', body: 'Say yes or no to eight pieces. FORM reads the colours, fabrics and shapes you keep choosing.' },
@@ -60,8 +81,8 @@ export function DesktopWelcome({ returning, onStart, onReturn }: Props) {
   const reduced = useReduceMotion(), t = useCoverLoop(reduced);
   const heroHeight = Math.max(620, height - HEADER_HEIGHT);
   const coverHeight = Math.min(heroHeight - 120, 760), coverWidth = Math.round(coverHeight * 390 / 604 * 1.12);
-  const dress = retailerPhotography[coverScenes.womens.pieces]?.source;
-  const pictures = [dress, coverScenes.mens.flatLay, coverScenes.mens.worn];
+  const pictures = [null, coverScenes.mens.flatLay, coverScenes.mens.worn];
+  const mosaic = useMemo(() => onModelPieces(4), []);
   return <View style={styles.root}>
     <SiteHeader right={<>{returning && <HeaderAction label="Back to my wardrobe" onPress={onReturn} />}<HeaderAction dark label="Get started" onPress={onStart} /></>} />
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
@@ -94,11 +115,25 @@ export function DesktopWelcome({ returning, onStart, onReturn }: Props) {
           <View style={styles.steps}>
             {steps.map((step, i) => <View key={step.n} style={styles.step}>
               <View style={styles.stepPhoto}>
-                {pictures[i] && (i === 0 ? <PlateImage source={pictures[i]!} style={{ position: 'absolute', left: '12%', top: '8%', width: '76%', height: '84%' }} /> : <Image source={pictures[i]!} resizeMode="cover" style={StyleSheet.absoluteFill} />)}
+                {i === 0 ? <View style={styles.mosaic}>{mosaic.map(p => <Image key={p.id} source={onModelPhotography[p.id]} resizeMode="cover" style={styles.mosaicTile} />)}</View> : <Image source={pictures[i]!} resizeMode="cover" style={fill} />}
               </View>
               <Text style={styles.stepNumber}>{step.n}</Text>
               <Text style={styles.stepTitle}>{step.title}</Text>
               <Text style={styles.stepBody}>{step.body}</Text>
+            </View>)}
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.lookbookWrap}>
+        <View style={styles.section}>
+          <Text style={styles.eyebrow}>THE LOOKBOOK</Text>
+          <Text style={styles.sectionTitle}>Complete looks, <Text style={styles.italic}>not just pieces.</Text></Text>
+          <View style={styles.lookbook}>
+            {lookbook.map(look => <View key={look.title} style={styles.look}>
+              <View style={styles.lookPhoto}><Image source={look.image} resizeMode="cover" style={fill} /></View>
+              <Text style={styles.lookTitle}>{look.title}</Text>
+              <Text style={styles.lookNote}>{look.note}</Text>
             </View>)}
           </View>
         </View>
@@ -120,6 +155,9 @@ export function DesktopWelcome({ returning, onStart, onReturn }: Props) {
     </ScrollView>
   </View>;
 }
+
+/** Fills its frame. Width and height are explicit because React Native Web otherwise sizes a bundled image to its pixel size. */
+const fill = { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' } as const;
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.paper },
@@ -154,7 +192,15 @@ const styles = StyleSheet.create({
   marqueeWrap: { width: '100%', alignItems: 'center', paddingVertical: 96 },
   marquee: { width: '100%', overflow: 'hidden', marginTop: 44 },
   strip: { flexDirection: 'row', gap: 20, paddingLeft: 20 },
-  stripPhoto: { height: 250, backgroundColor: colors.plate, borderRadius: 2, overflow: 'hidden' },
+  stripPhoto: { height: 290, backgroundColor: colors.plate, borderRadius: 2, overflow: 'hidden' },
+  mosaic: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 3 },
+  mosaicTile: { width: '49.3%', height: '49.5%' },
+  lookbookWrap: { width: '100%', alignItems: 'center', paddingTop: 96 },
+  lookbook: { flexDirection: 'row', gap: 20, marginTop: 44 },
+  look: { flex: 1 },
+  lookPhoto: { aspectRatio: 0.72, backgroundColor: colors.plate, overflow: 'hidden', borderRadius: 2 },
+  lookTitle: { fontFamily: family.serif, fontSize: 26, lineHeight: 30, color: colors.ink, marginTop: 16 },
+  lookNote: { fontFamily: family.sans, fontSize: 13.5, color: colors.muted, marginTop: 4 },
   stripBrand: { fontFamily: family.sansMedium, fontSize: 9.5, letterSpacing: 1.4, color: colors.muted, marginTop: 10 },
   stripName: { fontFamily: family.sans, fontSize: 13, color: colors.ink, marginTop: 3 },
   closing: { width: '100%', alignItems: 'center', paddingVertical: 110, backgroundColor: colors.paper2, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },

@@ -1,6 +1,7 @@
-import { useRouter } from 'expo-router';
+import { useGlobalSearchParams, useRouter } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
+import { onModelPhotography } from '../data/editorial';
 import { useFormStore } from '../state/store';
 import { colors } from '../theme/tokens';
 import { family } from '../theme/typography';
@@ -57,6 +58,9 @@ export function HeaderAction({ label, onPress, dark = false }: { label: string; 
   </Pressable>;
 }
 
+/** Fills its frame. Width and height are explicit because React Native Web otherwise sizes a bundled image to its pixel size. */
+const fill = { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' } as const;
+
 const styles = StyleSheet.create({
   bar: { height: HEADER_HEIGHT, backgroundColor: 'rgba(243,240,234,0.92)', borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line2, zIndex: 10, backdropFilter: 'blur(14px)' } as object,
   inner: { flex: 1, flexDirection: 'row', alignItems: 'center', width: '100%', maxWidth: 1360, alignSelf: 'center', paddingHorizontal: 40 },
@@ -83,7 +87,7 @@ const womens = require('../../assets/placeholders/womens-weekend.jpg');
 const nightOut = require('../../assets/placeholders/night-out.jpg');
 const weekend = require('../../assets/placeholders/weekend-ease.jpg');
 /** What the photograph beside each step says. */
-const panels: Record<string, { image: number; eyebrow: string; title: string; italic: string; body: string }> = {
+const panels: Record<string, { image: ImageSourcePropType; eyebrow: string; title: string; italic: string; body: string }> = {
   start: { image: womens, eyebrow: 'GETTING TO KNOW YOU', title: 'Two minutes,', italic: 'then it knows.', body: 'Pick a department, react to eight pieces and tell FORM how you like things to fit. That is all it needs to compose your first edit.' },
   onboarding: { image: womens, eyebrow: 'GETTING TO KNOW YOU', title: 'Two minutes,', italic: 'then it knows.', body: 'A few quick questions shape your feed, your sizes and your budget.' },
   results: { image: outfit, eyebrow: 'YOUR EDIT', title: 'Composed', italic: 'for you.', body: 'Every look is built in your size from pieces you can buy today, and explained in a sentence.' },
@@ -97,12 +101,16 @@ const fallback = { image: nightOut, eyebrow: 'FORM', title: 'Your wardrobe,', it
 export function FlowFrame({ route, children }: { route: string; children: ReactNode }) {
   const router = useRouter();
   const onboarded = useFormStore(s => s.onboardingComplete);
-  const panel = panels[route] ?? fallback;
+  const { id } = useGlobalSearchParams<{ id?: string }>();
+  const base = panels[route] ?? fallback;
+  // A piece's page shows that piece as the retailer photographed it on a model, when there is such a photo.
+  const worn = route.startsWith('product') && typeof id === 'string' ? onModelPhotography[id] : undefined;
+  const panel = worn ? { ...base, image: worn } : base;
   return <View style={{ flex: 1, backgroundColor: colors.paper }}>
     <SiteHeader right={onboarded ? <HeaderAction label="Back to For You" onPress={() => router.navigate('/home')} /> : undefined} />
     <View style={flow.row}>
       <View style={flow.panel}>
-        <Image source={panel.image} resizeMode="cover" style={StyleSheet.absoluteFill} />
+        <Image source={panel.image} resizeMode="cover" style={fill} />
         <View style={flow.scrim} />
         <View style={flow.caption}>
           <Text style={flow.eyebrow}>{panel.eyebrow}</Text>
@@ -117,7 +125,7 @@ export function FlowFrame({ route, children }: { route: string; children: ReactN
 const flow = StyleSheet.create({
   row: { flex: 1, flexDirection: 'row' },
   panel: { flex: 1, overflow: 'hidden', backgroundColor: colors.plate, justifyContent: 'flex-end' },
-  scrim: { ...StyleSheet.absoluteFillObject, backgroundImage: 'linear-gradient(180deg, rgba(22,21,18,0) 45%, rgba(22,21,18,0.62) 100%)' } as object,
+  scrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundImage: 'linear-gradient(180deg, rgba(22,21,18,0) 45%, rgba(22,21,18,0.62) 100%)' } as object,
   caption: { padding: 56, maxWidth: 560 },
   eyebrow: { fontFamily: family.sansMedium, fontSize: 10.5, letterSpacing: 2.4, color: 'rgba(243,240,234,0.8)' },
   title: { fontFamily: family.serif, fontSize: 56, lineHeight: 56, letterSpacing: -0.8, color: colors.paper, marginTop: 14 },
