@@ -10,10 +10,20 @@ This repository publishes FORM as a website with GitHub Pages.
 FORM started as a phone app. This build lays it out as a real website on a computer, and keeps the
 full-screen app layout on phones.
 
-- **Landing page:** the promise, a looping cover that shows chosen pieces becoming a worn look,
-  "How it works" as a pinned scroll scene (the pieces you said yes to gather into the app's Edits
-  outfit stage, which then becomes live so you can swap pieces), a lookbook of the app's styled looks, and a moving strip of real catalogue
-  pieces photographed on models, with prices.
+- **Landing page: a style lab that styles you while you play.** On a computer, the landing page is one
+  live scene instead of sections to scroll. It greets you with your local time and season, for
+  example "It’s 9:40 on a late-autumn Friday morning." If you click **Use my weather**, it also uses
+  the weather: it asks the browser for your location and gets the forecast from Open-Meteo. Real
+  catalogue pieces float in.
+  - **Drag a piece onto the figure** to wear it, or **flick it away** to pass. The **Wear it** and
+    **Pass** buttons and the `→`/`←` keys do the same.
+  - **Each answer runs the app's own taste model and styling engine.** The figure (the app's Edits
+    outfit stage) dresses again around what you said yes to. The headline rewrites itself with what
+    it has learned, for example "Cotton broadcloth. Light neutrals. Classic." The colour field
+    behind shifts toward your colours. A readout tracks your palette, fabric, fit and budget.
+  - **After eight answers,** "Your edit is ready" opens the app with onboarding already done, sized
+    M with an easy fit. You can change both later. **Get started** still runs the full quiz.
+  - **Phones keep the app's own swipe-deck onboarding.**
 - **Site navigation:** a top bar with For You, Edits, Try On, Saved (with a live count), You, and
   **Start over**, which clears what the site saved in your browser.
 - **For You:** a two-column page. The left side has the date, your progress through today's selection,

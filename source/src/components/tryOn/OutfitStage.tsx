@@ -44,8 +44,10 @@ type Arrival = { slot: StageSlot; dir: 1 | -1; product: Product; box: PieceBox; 
 export type StageNeighbours = Partial<Record<StageSlot, { prev?: Product; next?: Product }>>;
 const arrivalKey = (slot: StageSlot, dir: number) => { 'worklet'; return slot + (dir > 0 ? '+' : '-'); };
 
-export function OutfitStage({ products, tucked, onToggleTuck, onSwap, onRemove, scrollable = false, neighbours }: {
-  products: Product[]; tucked: boolean; onToggleTuck: () => void;
+export function OutfitStage({ products, tucked, onToggleTuck, onSwap, onRemove, scrollable = false, neighbours, bare = false }: {
+  products: Product[];
+  /** No backdrop or rounded plate: the outfit stands straight on whatever is behind it (the website's landing). */
+  bare?: boolean; tucked: boolean; onToggleTuck: () => void;
   /** What a swipe on each slot brings (`next` for a right swipe or a tap, `prev` for a left swipe). Must match what
    * `onSwap` puts on. Those pieces are decoded and laid out ahead, so a swap shows the moment you let go. */
   neighbours?: StageNeighbours;
@@ -312,8 +314,8 @@ export function OutfitStage({ products, tucked, onToggleTuck, onSwap, onRemove, 
   const [top, pants, shoes] = (['top', 'pants', 'shoes'] as const).map(s => products.find(p => p.slot === s || (s === 'top' && p.slot === 'dress')));
   const backdrop = [mix(top?.hex, 0.10), mix(pants?.hex ?? top?.hex, 0.15), mix(shoes?.hex, 0.08)] as const;
   const names = products.map(p => p.name).join(', ');
-  return <View style={styles.stage} onLayout={e => setSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}>
-    <LinearGradient pointerEvents="none" colors={backdrop} locations={[0, 0.72, 1]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={StyleSheet.absoluteFill} />
+  return <View style={[styles.stage, bare && { backgroundColor: 'transparent', borderRadius: 0, overflow: 'visible' }]} onLayout={e => setSize({ width: e.nativeEvent.layout.width, height: e.nativeEvent.layout.height })}>
+    {!bare && <LinearGradient pointerEvents="none" colors={backdrop} locations={[0, 0.72, 1]} start={{ x: 0.3, y: 0 }} end={{ x: 0.7, y: 1 }} style={StyleSheet.absoluteFill} />}
     <GestureDetector gesture={pan}>
       <View style={StyleSheet.absoluteFill} accessible accessibilityRole="adjustable" accessibilityLabel={names ? 'Outfit: ' + names : 'Empty outfit'}
         accessibilityActions={layout.boxes.flatMap(b => [{ name: 'next-' + b.slot, label: 'Next ' + slotName(b.slot) }, { name: 'off-' + b.slot, label: 'Take off ' + slotName(b.slot) }])}

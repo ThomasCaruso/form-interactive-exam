@@ -134,6 +134,43 @@ async function smoke(browser, BASE) {
       ok('run completed', false, e.message.split('\n')[0]);
     }
 
+    if (name === 'desktop') {
+      // The landing scene: drag a piece onto the figure, flick one away, answer the rest, and open the app already set up.
+      const lab = await ctx.browser().newContext(cfg), lp = await lab.newPage(); watch(lp);
+      try {
+        await lp.goto(BASE, { waitUntil: 'domcontentloaded' });
+        await lp.getByText('Drag it onto the figure', { exact: false }).waitFor({ timeout: 15000 });
+        await lp.waitForTimeout(1500);
+        const head = () => lp.getByRole('heading', { level: 1 }).first().getAttribute('aria-label');
+        ok('lab greets with the moment', /It’s \d+:\d\d on an? /.test(await lp.innerText('body')) && /dress you/.test(await head()));
+        const front = async () => {
+          const els = lp.locator('[data-lab="piece"]'); let best = null;
+          for (let i = 0; i < await els.count(); i++) { const b = await els.nth(i).boundingBox(); if (b && (!best || b.width * b.height > best.width * best.height)) best = b; }
+          return best;
+        };
+        const fig = await lp.locator('.lab-figure').boundingBox();
+        let b = await front();
+        await lp.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await lp.mouse.down();
+        for (let i = 1; i <= 16; i++) { await lp.mouse.move(b.x + b.width / 2 + (fig.x + fig.width / 2 - b.x - b.width / 2) * i / 16, b.y + b.height / 2 + (fig.y + fig.height * 0.35 - b.y - b.height / 2) * i / 16); await lp.waitForTimeout(16); }
+        await lp.mouse.up(); await lp.waitForTimeout(1300);
+        ok('lab: dragging onto the figure wears it', /1 yes, 0 no/.test(await lp.innerText('body')) && !/dress you/.test(await head()));
+        b = await front();
+        await lp.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await lp.mouse.down();
+        for (let i = 1; i <= 5; i++) await lp.mouse.move(b.x + b.width / 2 + i * 90, b.y + b.height / 2 - i * 50);
+        await lp.mouse.up(); await lp.waitForTimeout(1300);
+        ok('lab: a flick passes', /1 yes, 1 no/.test(await lp.innerText('body')));
+        for (let i = 0; i < 6; i++) { await lp.getByRole('button', { name: i % 3 === 1 ? '← Pass' : 'Wear it →' }).click(); await lp.waitForTimeout(700); }
+        const cta = lp.getByRole('button', { name: /^Your edit is ready — \d+ looks/ });
+        await cta.waitFor({ timeout: 10000 });
+        ok('lab: edit ready after 8 answers', /5 yeses, 3 no/.test(await lp.innerText('body')));
+        await cta.click(); await lp.waitForURL(/\/home/, { timeout: 15000 }); await lp.waitForTimeout(1500);
+        ok('lab: opens the app already set up', /of \d+ pieces in today/.test(await lp.innerText('body')), lp.url());
+      } catch (e) {
+        ok('lab run completed', false, e.message.split('\n')[0]);
+      }
+      await lab.close();
+    }
+
     results[name] = { log, errs: [...new Set(errs)], bad: [...new Set(bad)] };
     await ctx.close();
   }
