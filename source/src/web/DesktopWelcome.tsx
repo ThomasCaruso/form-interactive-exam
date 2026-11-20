@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import Animated, { Easing, cancelAnimation, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Animated, { Easing, cancelAnimation, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 import { CoverLoop, CoverProgress, useCoverLoop } from '../components/CoverLoop';
-import { coverScenes, onModelPhotography } from '../data/editorial';
+import { onModelPhotography } from '../data/editorial';
 import { realCatalogProducts } from '../data/realCatalog';
 import { formatMoney } from '../domain/selectors';
 import { useReduceMotion } from '../hooks/useReduceMotion';
 import { colors } from '../theme/tokens';
 import { family } from '../theme/typography';
 import { HEADER_HEIGHT } from './desktop';
+import { ScrollDressing } from './ScrollDressing';
 import { HeaderAction, SiteHeader } from './SiteHeader';
 
 type Props = { returning: boolean; onStart: () => void; onReturn: () => void };
@@ -69,23 +70,17 @@ const lookbook = [
   { image: quietConfidence, title: 'Quiet confidence', note: 'Suede, cream and charcoal' },
 ];
 
-const steps = [
-  { n: '01', title: 'Teach it your taste', body: 'Say yes or no to eight pieces. FORM reads the colours, fabrics and shapes you keep choosing.' },
-  { n: '02', title: 'Get your edit', body: 'Complete looks in your size, your silhouette and your budget, built from pieces you can actually buy.' },
-  { n: '03', title: 'Make it yours', body: 'Swipe a daily selection, build outfits in Edits, save what you love and plan the week ahead.' },
-];
-
 /** The cover as a website: the promise on the left, the photographs looping on the right, then how it works. */
 export function DesktopWelcome({ returning, onStart, onReturn }: Props) {
   const { width, height } = useWindowDimensions();
   const reduced = useReduceMotion(), t = useCoverLoop(reduced);
   const heroHeight = Math.max(620, height - HEADER_HEIGHT);
   const coverHeight = Math.min(heroHeight - 120, 760), coverWidth = Math.round(coverHeight * 390 / 604 * 1.12);
-  const pictures = [null, coverScenes.mens.flatLay, coverScenes.mens.worn];
-  const mosaic = useMemo(() => onModelPieces(4), []);
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler(e => { scrollY.value = e.contentOffset.y; });
   return <View style={styles.root}>
     <SiteHeader right={<>{returning && <HeaderAction label="Back to my wardrobe" onPress={onReturn} />}<HeaderAction dark label="Get started" onPress={onStart} /></>} />
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
+    <Animated.ScrollView onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false} contentContainerStyle={{ alignItems: 'center' }}>
       <View style={[styles.hero, { minHeight: heroHeight }]}>
         <View style={styles.copy}>
           <Text style={styles.eyebrow}>PERSONAL STYLING, QUIETLY DONE</Text>
@@ -108,22 +103,7 @@ export function DesktopWelcome({ returning, onStart, onReturn }: Props) {
         </View>
       </View>
 
-      <View style={styles.band}>
-        <View style={styles.section}>
-          <Text style={styles.eyebrow}>HOW IT WORKS</Text>
-          <Text style={styles.sectionTitle}>Three steps, <Text style={styles.italic}>then it just knows.</Text></Text>
-          <View style={styles.steps}>
-            {steps.map((step, i) => <View key={step.n} style={styles.step}>
-              <View style={styles.stepPhoto}>
-                {i === 0 ? <View style={styles.mosaic}>{mosaic.map(p => <Image key={p.id} source={onModelPhotography[p.id]} resizeMode="cover" style={styles.mosaicTile} />)}</View> : <Image source={pictures[i]!} resizeMode="cover" style={fill} />}
-              </View>
-              <Text style={styles.stepNumber}>{step.n}</Text>
-              <Text style={styles.stepTitle}>{step.title}</Text>
-              <Text style={styles.stepBody}>{step.body}</Text>
-            </View>)}
-          </View>
-        </View>
-      </View>
+      <ScrollDressing scrollY={scrollY} width={width} height={height - HEADER_HEIGHT} onStart={onStart} />
 
       <View style={styles.lookbookWrap}>
         <View style={styles.section}>
@@ -152,7 +132,7 @@ export function DesktopWelcome({ returning, onStart, onReturn }: Props) {
         <View style={{ marginTop: 28 }}><CTA dark label="Start your edit" onPress={onStart} /></View>
         <Text style={styles.footnote}>Everything stays in your browser. Prices are a guide from the retailer; nothing is purchased here.</Text>
       </View>
-    </ScrollView>
+    </Animated.ScrollView>
   </View>;
 }
 
@@ -180,21 +160,12 @@ const styles = StyleSheet.create({
   coverFrame: { overflow: 'hidden', borderRadius: 3, boxShadow: '0 30px 60px -30px rgba(40,34,24,0.35)' } as object,
   coverCaption: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
   captionText: { fontFamily: family.serifItalic, fontSize: 14, color: colors.muted },
-  band: { width: '100%', backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.line, alignItems: 'center', paddingVertical: 96 },
   section: { width: '100%', maxWidth: 1320, paddingHorizontal: 64 },
   sectionTitle: { fontFamily: family.serif, fontSize: 48, lineHeight: 52, letterSpacing: -0.6, color: colors.ink, marginTop: 14 },
-  steps: { flexDirection: 'row', gap: 36, marginTop: 52 },
-  step: { flex: 1 },
-  stepPhoto: { aspectRatio: 0.82, backgroundColor: colors.plate, overflow: 'hidden', borderRadius: 2 },
-  stepNumber: { fontFamily: family.serif, fontSize: 22, color: colors.muted, marginTop: 22 },
-  stepTitle: { fontFamily: family.sansMedium, fontSize: 18, color: colors.ink, marginTop: 6 },
-  stepBody: { fontFamily: family.sans, fontSize: 14.5, lineHeight: 23, color: colors.ink2, marginTop: 8, maxWidth: 360 },
   marqueeWrap: { width: '100%', alignItems: 'center', paddingVertical: 96 },
   marquee: { width: '100%', overflow: 'hidden', marginTop: 44 },
   strip: { flexDirection: 'row', gap: 20, paddingLeft: 20 },
   stripPhoto: { height: 290, backgroundColor: colors.plate, borderRadius: 2, overflow: 'hidden' },
-  mosaic: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, flexDirection: 'row', flexWrap: 'wrap', gap: 3 },
-  mosaicTile: { width: '49.3%', height: '49.5%' },
   lookbookWrap: { width: '100%', alignItems: 'center', paddingTop: 96 },
   lookbook: { flexDirection: 'row', gap: 20, marginTop: 44 },
   look: { flex: 1 },

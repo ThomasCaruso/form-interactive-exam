@@ -11,7 +11,8 @@ FORM started as a phone app. This build lays it out as a real website on a compu
 full-screen app layout on phones.
 
 - **Landing page:** the promise, a looping cover that shows chosen pieces becoming a worn look,
-  "How it works", a lookbook of the app's styled looks, and a moving strip of real catalogue
+  "How it works" as a pinned scroll scene (the pieces you said yes to gather into the app's Edits
+  outfit stage, which then becomes live so you can swap pieces), a lookbook of the app's styled looks, and a moving strip of real catalogue
   pieces photographed on models, with prices.
 - **Site navigation:** a top bar with For You, Edits, Try On, Saved (with a live count), You, and
   **Start over**, which clears what the site saved in your browser.
