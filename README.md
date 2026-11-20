@@ -1,26 +1,31 @@
-# FORM — interactive demo
+# FORM — your personal stylist
 
-FORM is a personal-stylist concept: describe an occasion and it builds three complete
-looks around your fit, taste, and budget. This repository is a standalone, front-end-only
-demo of that experience, published with GitHub Pages.
+FORM learns your taste, fit, and budget, then builds complete outfits from real pieces.
+This repository publishes the FORM app as a website with GitHub Pages.
 
 **Live site:** https://thomascaruso.github.io/form-interactive-exam/
 
-## What you can do
+On a computer the app runs inside a phone frame next to a short introduction. On a phone it
+opens full screen at [`/app/`](https://thomascaruso.github.io/form-interactive-exam/app/).
 
-- **Enter the demo** — "Explore the demo" or "Build my FORM" (four-step setup: photos, style, sizing, budget).
-- **Generate looks** — type an occasion or tap a quick chip, then "Style me".
-- **Change options** — open a look to swap pieces, change colors, read fit details, and preview a simulated try-on.
-- **Revise and compare** — push all three looks in a direction (Lower total, Dressier, More relaxed,
-  Darker palette). Each revision is kept as a version (v1, v2, v3…) with a list of what changed and how
-  the average total moved, so you can compare, go back, and keep experimenting.
-- **Save looks** — heart any look; the Saved board keeps the exact version you saved.
-- **Navigate** — Home, Saved, and Your FORM (sidebar on desktop, bottom bar on mobile).
+## Try it
 
-## Notes
+1. **Teach it your taste.** Pick a department, then say yes or no to eight pieces.
+2. **Get your edit.** Choose your size and silhouette; FORM composes looks for you.
+3. **Explore.**
+   - **For You:** a feed of pieces and complete looks to save or pass.
+   - **Edits:** build and keep outfits.
+   - **Try On:** stage an outfit for a try-on.
+   - **Saved:** your pieces, looks, and wardrobe.
+   - **You:** plan your week and refine your style brief.
 
-- Plain HTML, CSS, and JavaScript — no build step, no backend, no accounts.
-- Catalog items are illustrative; nothing is for sale. Uploaded photos stay in the browser tab.
-- All asset paths are relative, so the site works from the `/form-interactive-exam/` Pages path.
+"Restart the app" on the desktop page clears what the app saved in your browser and starts over.
 
-Run locally: open `index.html`, or `python -m http.server` in this folder.
+## About this build
+
+- The app is written in React Native with Expo and exported to static web files. This repo contains
+  only that compiled website (`app/`) plus the landing page (`index.html`).
+- Everything runs in the browser. There are no accounts, no server, and nothing is purchased.
+  Product prices are a guide from the retailer.
+- AI try-on needs a private image service, so it is not connected in this public build. The app says so.
+- Each app screen has its own entry page, and `404.html` falls back to the app, so reloading any screen works.
