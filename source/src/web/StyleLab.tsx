@@ -1,12 +1,12 @@
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { Image, View } from 'react-native';
 import { OutfitStage, type StageNeighbours } from '../components/tryOn/OutfitStage';
 import { CUTOUT_PAD, cutouts } from '../data/cutouts';
 import { realCatalogProducts } from '../data/realCatalog';
 import { completeLooks } from '../domain/completeLooks';
 import type { StageSlot } from '../domain/outfitLayout';
-import { readOutfit, stepRail } from '../domain/outfitRead';
+import { stepRail } from '../domain/outfitRead';
 import { formatMoney } from '../domain/selectors';
 import { applyFit, applyTaste, firstRunProfile, tasteChips, tasteDeck } from '../domain/taste';
 import type { Product, Profile, ShopFor } from '../domain/types';
@@ -109,21 +109,24 @@ type Mode = 'enter' | 'float' | 'drag' | 'fling' | 'wear';
 type Body = { x: number; y: number; vx: number; vy: number; r: number; vr: number; s: number; o: number; mode: Mode; t: number;
   gx: number; gy: number; fx: number; fy: number; tx: number; ty: number; seed: number; hover: boolean; el: HTMLDivElement | null };
 type Sample = { x: number; y: number; t: number };
+/** A steady 0–1 number per piece, so each one drifts in its own way. */
+const seedOf = (id: string) => [...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7) / 9973;
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 const ease = (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
 type Props = { onStart: () => void };
+/** Four answers are enough for a first edit: two womenswear, two menswear. The full quiz is still under Get started. */
+const ANSWERS = 4;
 
 export function StyleLab({ width: W, height: H, onStart }: Props & { width: number; height: number }) {
   const router = useRouter();
   const reduced = useReduceMotion();
   const base = useFormStore(s => s.profile);
   const finishOnboarding = useFormStore(s => s.finishOnboarding);
-  const deck = useMemo(() => tasteDeck('both').filter(p => cutouts[p.id]), []);
+  const deck = useMemo(() => tasteDeck('both').filter(p => cutouts[p.id]).slice(0, ANSWERS), []);
   const [liked, setLiked] = useState<Product[]>([]), [passed, setPassed] = useState<Product[]>([]);
   const [leaving, setLeaving] = useState<string[]>([]);
   const [outfit, setOutfit] = useState<Product[]>(() => restyle(base, [], [], []).outfit);
-  const [lookCount, setLookCount] = useState(6);
   const [tucked, setTucked] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [weather, setWeather] = useState<Weather | null>(null), [asking, setAsking] = useState<'idle' | 'busy' | 'no'>('idle');
@@ -132,7 +135,7 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
   useEffect(() => { const id = setInterval(() => setNow(new Date()), 20000); return () => clearInterval(id); }, []);
 
   const decided = useMemo(() => new Set([...liked, ...passed].map(p => p.id)), [liked, passed]);
-  const queue = deck.filter(p => !decided.has(p.id)).slice(0, 3);
+  const queue = deck.filter(p => !decided.has(p.id)).slice(0, 1);
   const front = queue[0];
   const done = liked.length + passed.length >= deck.length;
   const shown = [...queue, ...leaving.map(id => deck.find(p => p.id === id)!).filter(p => p && !queue.includes(p))];
@@ -158,13 +161,16 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
 
   // Everything the frame loop needs, refreshed every render.
   const geo = useRef({ W, H, fx, fy, fw, fh, anchors, queue: queue.map(p => p.id), reduced });
-  geo.current = { W, H, fx, fy, fw, fh, anchors, queue: queue.map(p => p.id), reduced };
   const sizes = useRef(new Map<string, { w: number; h: number }>());
-  shown.forEach(p => sizes.current.set(p.id, sizeOf(p)));
+  const shownSizes = shown.map(p => [p.id, sizeOf(p)] as const);
+  useLayoutEffect(() => {
+    geo.current = { W, H, fx, fy, fw, fh, anchors, queue: queue.map(p => p.id), reduced };
+    shownSizes.forEach(([id, size]) => sizes.current.set(id, size));
+  });
 
   // ---------- Decisions ----------
   const latest = useRef({ liked, passed, outfit, base });
-  latest.current = { liked, passed, outfit, base };
+  useLayoutEffect(() => { latest.current = { liked, passed, outfit, base }; });
   const decide = useCallback((p: Product, yes: boolean, fling?: { vx: number; vy: number }) => {
     const b = bodies.current.get(p.id);
     if (b) {
@@ -181,10 +187,10 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
     // The figure re-dresses as the piece lands.
     setTimeout(() => {
       const r = restyle(B, nextLiked, nextPassed, O);
-      setOutfit(r.outfit); setLookCount(r.looks || 6);
+      setOutfit(r.outfit);
       if (yes) setPulse(n => n + 1);
     }, yes && !geo.current.reduced ? 260 : 0);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // ---------- The frame loop: pieces, figure tilt, cursor, colour field, kinetic type ----------
   const bodies = useRef(new Map<string, Body>());
@@ -192,7 +198,7 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
   const cursor = useRef<HTMLDivElement | null>(null), cursorLabel = useRef<HTMLSpanElement | null>(null), canvas = useRef<HTMLCanvasElement | null>(null);
   const headline = useRef<HTMLDivElement | null>(null);
   const pointer = useRef({ x: -999, y: -999, cx: -999, cy: -999, inside: false, label: '' });
-  const drag = useRef<{ id: string; samples: Sample[] } | null>(null);
+  const drag = useRef<{ id: string; samples: Sample[]; start: Sample } | null>(null);
   const active = useRef(true);
   const chars = useRef<{ el: HTMLElement; x: number; y: number; k: number }[]>([]);
   const fieldTarget = useRef<number[][]>(DEFAULT_FIELD.map(rgb));
@@ -202,8 +208,8 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
     let b = bodies.current.get(id);
     if (!b && el) {
       const i = Math.max(0, geo.current.queue.indexOf(id)), a = geo.current.anchors[i] ?? geo.current.anchors[0];
-      b = { x: geo.current.W + 260, y: a.y + (Math.random() - 0.5) * 120, vx: -900, vy: 0, r: 18, vr: 0, s: a.s, o: 1, mode: 'enter', t: 0,
-        gx: 0, gy: 0, fx: 0, fy: 0, tx: 0, ty: 0, seed: Math.random() * 10, hover: false, el };
+      b = { x: geo.current.W + 260, y: a.y + (seedOf(id) - 0.5) * 120, vx: -900, vy: 0, r: 18, vr: 0, s: a.s, o: 1, mode: 'enter', t: 0,
+        gx: 0, gy: 0, fx: 0, fy: 0, tx: 0, ty: 0, seed: seedOf(id) * 10, hover: false, el };
       if (geo.current.reduced) { b.x = a.x; b.y = a.y; b.vx = 0; b.r = 0; }
       bodies.current.set(id, b);
     }
@@ -349,7 +355,11 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
       const dtS = first && lastS && lastS.t > first.t ? (lastS.t - first.t) / 1000 : 0;
       const vx = dtS ? (lastS.x - first.x) / dtS : 0, vy = dtS ? (lastS.y - first.y) / dtS : 0;
       const over = mx > g.fx - 30 && mx < g.fx + g.fw + 30 && my > g.fy && my < g.fy + g.fh;
-      if (over) decide(p, true);
+      // A toss: fast at the end, or a quick throw overall (slow frames can merge the last moves into one).
+      const took = (at - d.start.t) / 1000, thrown = Math.hypot(e.clientX - d.start.x, e.clientY - d.start.y);
+      const tossed = took < 0.45 && thrown > 120;
+      if (!over && tossed && Math.hypot(vx, vy) < 700) decide(p, false, { vx: clamp((e.clientX - d.start.x) / took, -3200, 3200), vy: clamp((e.clientY - d.start.y) / took, -2400, 2400) });
+      else if (over) decide(p, true);
       else if (Math.hypot(vx, vy) > 700) decide(p, false, { vx: clamp(vx, -3200, 3200), vy: clamp(vy, -2400, 2400) });
       else b.mode = 'float';
     };
@@ -367,7 +377,8 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
     e.preventDefault();
     try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
     b.mode = 'drag'; b.gx = e.clientX - rect.left - b.x; b.gy = e.clientY - rect.top - b.y;
-    drag.current = { id, samples: [{ x: e.clientX, y: e.clientY, t: performance.now() }] };
+    const start = { x: e.clientX, y: e.clientY, t: performance.now() };
+    drag.current = { id, samples: [start], start };
     setHint(false);
   };
 
@@ -387,12 +398,10 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
   const chips = tasteChips(liked, 3);
   // The headline is what it has learned, one trait a line; the last line, in italic, is how sure it is.
   const lines: string[] = done ? ['Your edit', 'is ready.']
-    : liked.length ? [...chips.map(c => c + '.'), liked.length < 3 ? 'Getting warmer.' : liked.length < 5 ? 'Now we’re talking.' : 'That’s you.']
+    : liked.length ? [...chips.slice(0, 2).map(c => c + '.'), liked.length < 2 ? 'Getting warmer.' : 'That’s you.']
     : passed.length ? ['Not that.', 'Noted.'] : ['Let’s', 'dress you.'];
   const left = deck.length - liked.length - passed.length;
-  const kicker = !liked.length && !passed.length ? m.sentence
-    : done ? `${liked.length} yes${liked.length === 1 ? '' : 'es'}, ${passed.length} no. The engine has what it needs.`
-    : `${liked.length} yes${liked.length === 1 ? '' : 'es'}, ${passed.length} no. ${left} to go.`;
+  const kicker = !liked.length && !passed.length ? m.sentence : done ? 'Complete looks, sized and priced.' : `${left} to go.`;
   const headKey = lines.join('|');
   const longest = Math.max(...lines.map(l => l.length));
   const headFit = Math.round(clamp(Math.min(leftW / (Math.max(9, longest) * 0.4), H / 6.6, H * 0.46 / lines.length / 0.92, 132), 40, 132));
@@ -403,13 +412,6 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
     return () => clearTimeout(id);
   }, [headKey, W, H]);
 
-  const materials = (liked.map(p => p.material?.replace(/ blend$/i, '')).filter(Boolean) as string[])
-    .filter((m, i, all) => all.findIndex(x => x.split(' ')[0] === m.split(' ')[0]) === i).slice(0, 2);
-  const relaxed = liked.filter(p => p.relaxed).length;
-  const fit = !liked.length ? '—' : relaxed * 2 > liked.length ? 'Relaxed' : relaxed === 0 && liked.length > 1 ? 'Close' : 'Mixed';
-  const avg = liked.length ? Math.round(liked.reduce((s, p) => s + p.priceCents, 0) / liked.length) : 0;
-  const total = outfit.reduce((s, p) => s + p.priceCents, 0);
-  const read = readOutfit(outfit).line;
 
   // ---------- The figure: the app's real outfit stage ----------
   const onSwap = useCallback((slot: StageSlot, dir: 1 | -1) => {
@@ -461,15 +463,9 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
         </div>)}
       </div>
     </div>
-    <div className="lab-readout" style={{ left: pad, bottom: Math.max(28, H * 0.06), width: leftW }} aria-live="polite">
+    <div className="lab-readout" style={{ left: pad, bottom: Math.max(28, H * 0.07), width: Math.min(leftW, 260) }}>
       <div className="lab-ticks" aria-label={`${liked.length + passed.length} of ${deck.length} answered`}>
         {deck.map(p => <span key={p.id} className={liked.includes(p) ? 'on' : passed.includes(p) ? 'no' : ''} />)}
-      </div>
-      <div className="lab-grid">
-        <div><small>PALETTE</small><div className="lab-swatches">{Array.from({ length: 5 }, (_, i) => { const p = liked[i]; return <i key={p?.id ?? i} style={p ? { background: p.hex } : undefined} className={p ? 'on' : ''} />; })}</div></div>
-        <div><small>FABRIC</small><b>{materials.join(' · ') || '—'}</b></div>
-        <div><small>FIT</small><b>{fit}</b></div>
-        <div><small>BUDGET</small><b>{avg ? `~${formatMoney(avg)} a piece` : '—'}</b></div>
       </div>
     </div>
 
@@ -477,17 +473,15 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
     <div ref={halo} className="lab-halo" aria-hidden style={{ left: fx - fw * 0.35, top: fy - fh * 0.05, width: fw * 1.7, height: fh * 1.1, background: `radial-gradient(closest-side, rgba(${ar},${ag},${ab},0.55), rgba(${ar},${ag},${ab},0))` }} />
     <div className="lab-plinth" aria-hidden style={{ left: fx + fw * 0.12, top: fy + fh - 18, width: fw * 0.76 }} />
     <div ref={figure} className="lab-figure" style={{ left: fx, top: fy, width: fw, height: fh }} data-cursor="Swipe">
-      <div className="lab-figlabel"><span>YOU, SO FAR</span><span>{formatMoney(total)}</span></div>
       <View style={{ width: fw, height: fh }}>
         <OutfitStage bare products={outfit} tucked={tucked} onToggleTuck={() => setTucked(t => !t)} onSwap={onSwap} onRemove={() => {}} neighbours={neighbours} />
       </View>
       {pulse > 0 && <div key={pulse} className="lab-pulse" aria-hidden />}
-      <p key={read} className="lab-read">{read}</p>
     </div>
 
     {/* Right: the pieces, waiting their turn. */}
     {shown.map(p => {
-      const cut = cutouts[p.id], s = sizes.current.get(p.id) ?? sizeOf(p), mpad = CUTOUT_PAD * s.w;
+      const cut = cutouts[p.id], s = sizeOf(p), mpad = CUTOUT_PAD * s.w;
       return <div key={p.id} ref={register(p.id)} className="lab-piece" data-lab="piece" data-cursor={p === front ? 'Drag me' : 'Up next'} aria-hidden
         onPointerDown={grab(p.id)} onPointerEnter={() => { const b = bodies.current.get(p.id); if (b) b.hover = true; }} onPointerLeave={() => { const b = bodies.current.get(p.id); if (b) b.hover = false; }}
         style={{ width: s.w, height: s.h, transform: `translate3d(${W + 400}px, ${H / 2}px, 0)` }}>
@@ -502,9 +496,6 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
         <button type="button" className="lab-btn dark" data-cursor="Wear" onClick={() => decide(front, true)}>Wear it →</button>
       </div>
     </div>}
-    {!done && <div className="lab-count" style={{ left: zoneL, width: zoneW, top: Math.max(24, H * 0.06) }}>
-      <span>PIECE {Math.min(deck.length, liked.length + passed.length + 1)} OF {deck.length}</span><span>REAL CATALOGUE</span>
-    </div>}
     {hint && !done && <div className="lab-hint" style={{ left: zoneL - 40, width: zoneW + 40, top: H * 0.06 + 26 }} aria-hidden>
       Drag it onto the figure to wear it. <em>Flick it away to pass.</em>
     </div>}
@@ -512,18 +503,10 @@ export function StyleLab({ width: W, height: H, onStart }: Props & { width: numb
       <path d={`M ${zoneC - frontSize.w * 0.45} ${anchors[0].y - 10} C ${zoneC - frontSize.w * 0.9} ${H * 0.18}, ${fx + fw * 0.9} ${H * 0.16}, ${fx + fw * 0.66} ${fy + fh * 0.24}`} />
     </svg>}
 
-    {done && <div className="lab-done" style={{ left: zoneL, width: zoneW, top: H * 0.16 }}>
-      <small>BUILT FROM YOUR {deck.length} ANSWERS</small>
-      <h2>{lookCount} complete looks,<br /><em>sized and priced.</em></h2>
-      <p>The engine kept your yeses, dropped your noes, and dressed the figure around them: {formatMoney(total)} for this one. Sized M with an easy fit — change it any time.</p>
-      <button type="button" className="lab-cta" data-cursor="Open" onClick={finish}>Your edit is ready — {lookCount} looks <span>→</span></button>
+    {done && <div className="lab-done" style={{ left: zoneL, width: zoneW, top: H * 0.4 }}>
+      <button type="button" className="lab-cta" data-cursor="Open" onClick={finish}>See my looks <span>→</span></button>
       <button type="button" className="lab-link" data-cursor="Again" onClick={restart}>Start again</button>
-      <button type="button" className="lab-link" data-cursor="Quiz" onClick={onStart}>Set my size first</button>
     </div>}
-
-    <div className="lab-foot" style={{ left: zoneL, width: zoneW, bottom: Math.max(20, H * 0.04) }}>
-      Everything happens in your browser.{weather ? ' Weather by Open-Meteo.' : ''}
-    </div>
     <div ref={cursor} className="lab-cursor" aria-hidden><span ref={cursorLabel} /></div>
   </div>;
 }
@@ -595,7 +578,7 @@ const CSS = `
 .lab-done h2 { font: 400 46px/.98 var(--serif); letter-spacing: -.02em; margin: 14px 0 0; }
 .lab-done h2 em { font-family: var(--italic); font-style: normal; }
 .lab-done p { font: 14.5px/1.55 var(--sans); color: ${colors.ink2}; margin: 18px 0 26px; }
-.lab-done .lab-link { margin: 14px 10px 0 0; }
+.lab-done .lab-link { display: block; margin: 16px 0 0; }
 .lab-cta { display: inline-flex; align-items: center; gap: 12px; height: 58px; padding: 0 26px; border-radius: 99px; border: 0; background: ${colors.ink}; color: ${colors.paper}; font: 15px var(--sansm);
   box-shadow: 0 18px 40px -18px rgba(22,21,18,.6); transition: transform .25s cubic-bezier(.2,.8,.2,1); animation: lab-glow 2.4s ease-in-out infinite; }
 .lab-cta:hover { transform: translateY(-2px) scale(1.02); } .lab-cta span { transition: transform .2s; } .lab-cta:hover span { transform: translateX(4px); }

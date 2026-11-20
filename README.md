@@ -14,15 +14,14 @@ full-screen app layout on phones.
   live scene instead of sections to scroll. It greets you with your local time and season, for
   example "It’s 9:40 on a late-autumn Friday morning." If you click **Use my weather**, it also uses
   the weather: it asks the browser for your location and gets the forecast from Open-Meteo. Real
-  catalogue pieces float in.
+  catalogue pieces float in one at a time.
   - **Drag a piece onto the figure** to wear it, or **flick it away** to pass. The **Wear it** and
     **Pass** buttons and the `→`/`←` keys do the same.
   - **Each answer runs the app's own taste model and styling engine.** The figure (the app's Edits
     outfit stage) dresses again around what you said yes to. The headline rewrites itself with what
-    it has learned, for example "Cotton broadcloth. Light neutrals. Classic." The colour field
-    behind shifts toward your colours. A readout tracks your palette, fabric, fit and budget.
-  - **After eight answers,** "Your edit is ready" opens the app with onboarding already done, sized
-    M with an easy fit. You can change both later. **Get started** still runs the full quiz.
+    it has learned, and the colour field behind shifts toward your colours.
+  - **After four answers,** **See my looks** opens the app with onboarding already done, sized M
+    with an easy fit. You can change both later. **Get started** still runs the full quiz.
   - **Phones keep the app's own swipe-deck onboarding.**
 - **Site navigation:** a top bar with For You, Edits, Try On, Saved (with a live count), You, and
   **Start over**, which clears what the site saved in your browser.

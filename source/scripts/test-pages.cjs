@@ -153,16 +153,17 @@ async function smoke(browser, BASE) {
         await lp.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await lp.mouse.down();
         for (let i = 1; i <= 16; i++) { await lp.mouse.move(b.x + b.width / 2 + (fig.x + fig.width / 2 - b.x - b.width / 2) * i / 16, b.y + b.height / 2 + (fig.y + fig.height * 0.35 - b.y - b.height / 2) * i / 16); await lp.waitForTimeout(16); }
         await lp.mouse.up(); await lp.waitForTimeout(1300);
-        ok('lab: dragging onto the figure wears it', /1 yes, 0 no/.test(await lp.innerText('body')) && !/dress you/.test(await head()));
+        const ticks = async k => lp.locator('.lab-ticks span.' + k).count();
+        ok('lab: dragging onto the figure wears it', await ticks('on') === 1 && !/dress you/.test(await head()));
         b = await front();
         await lp.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await lp.mouse.down();
         for (let i = 1; i <= 5; i++) await lp.mouse.move(b.x + b.width / 2 + i * 90, b.y + b.height / 2 - i * 50);
         await lp.mouse.up(); await lp.waitForTimeout(1300);
-        ok('lab: a flick passes', /1 yes, 1 no/.test(await lp.innerText('body')));
-        for (let i = 0; i < 6; i++) { await lp.getByRole('button', { name: i % 3 === 1 ? '← Pass' : 'Wear it →' }).click(); await lp.waitForTimeout(700); }
-        const cta = lp.getByRole('button', { name: /^Your edit is ready — \d+ looks/ });
+        ok('lab: a flick passes', await ticks('no') === 1);
+        for (let i = 0; i < 2; i++) { await lp.getByRole('button', { name: i ? '← Pass' : 'Wear it →' }).click(); await lp.waitForTimeout(700); }
+        const cta = lp.getByRole('button', { name: /^See my looks/ });
         await cta.waitFor({ timeout: 10000 });
-        ok('lab: edit ready after 8 answers', /5 yeses, 3 no/.test(await lp.innerText('body')));
+        ok('lab: edit ready after 4 answers', /Your edit is ready/.test(await head()) && await ticks('on') === 2);
         await cta.click(); await lp.waitForURL(/\/home/, { timeout: 15000 }); await lp.waitForTimeout(1500);
         ok('lab: opens the app already set up', /of \d+ pieces in today/.test(await lp.innerText('body')), lp.url());
       } catch (e) {
